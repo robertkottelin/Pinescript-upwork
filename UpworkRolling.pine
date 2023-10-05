@@ -8,18 +8,14 @@
 //    I need the TRADING script for the above and the pivots indicator to apply to HOURLY chart.
 
 //@version=5
-strategy("MyStrategy", shorttitle="MS", overlay=true)
+strategy("Upwork Rolling", shorttitle="UPRolling", overlay=true)
 
 // Parameters
-lookBackMonth = input.int(22, title="Look back period for Previous Month Low", minval=1)
-lookBackWeek = input.int(5, title="Look back period for Last Week", minval=1)
+lookBackMonth = input.int(31, title="Rolling look back period for Previous Month Low", minval=1)
+lookBackWeek = input.int(7, title="Rolling look back period for Last Week", minval=1)
 
 // 1. Find the lowest point of the Previous Calendar Month.
-var float lowestMonthLow = na
-if (dayofmonth == 1)
-    lowestMonthLow := low
-else
-    lowestMonthLow := math.min(lowestMonthLow, low)
+lowestMonthLow = ta.lowest(low[1], lookBackMonth)
 
 // 2. Calculate the Center Line of last week's High-Low Range.
 weekHigh = ta.highest(high, lookBackWeek)
@@ -27,7 +23,7 @@ weekLow = ta.lowest(low, lookBackWeek)
 centerLine = (weekHigh + weekLow) / 2
 
 // 3. Calculate the Pivot Point
-weekClose = request.security(syminfo.tickerid, "W", close[1], lookahead=barmerge.lookahead_on)
+weekClose = close[1] 
 pivotPoint = (weekHigh + weekLow + weekClose) / 3
 
 // 4. Check if we can trade
@@ -35,13 +31,13 @@ canTradeLong = pivotPoint > lowestMonthLow or centerLine > lowestMonthLow
 
 // 5. Buy the bar close above BOTH the Pivot and Center Line.
 higherLevel = math.max(pivotPoint, centerLine)
-lowerLevel = math.min(pivotPoint, centerLine)
 
 longCondition = close > higherLevel and canTradeLong
 if (longCondition)
     strategy.entry("Long", strategy.long)
 
 // 6. Exit the trade if price closes below BOTH the Pivot and Center Line.
+lowerLevel = math.min(pivotPoint, centerLine)
 exitCondition = close < lowerLevel
 if (exitCondition)
     strategy.close("Long")

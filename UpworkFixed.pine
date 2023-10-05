@@ -1,0 +1,64 @@
+//   The parameters are: 
+//    1. Find the lowest point of the Previous Calendar Month. 
+//    2. Calculate the "Center Line" of last week's High-Low Range, essentially the (Week High + Week Low) /2 
+//    3. Calculate the Pivot Point, essentially the (Week High + Week Low + Week Close) /3 
+//    4. If Last Week's PIVOT *or* Center Line are above the Previous Month's Calendar Low, then we can trade (Long Only) 
+//    5. Buy the bar *close *above BOTH the Pivot and Center Line (*whichever is the higher one*). 
+//    6. Exit the trade if price closes below BOTH the Pivot and Center Line (*whichever is the lower one*). Am attaching a jpeg for reference. 
+//    I need the TRADING script for the above and the pivots indicator to apply to HOURLY chart.
+
+//@version=5
+strategy("Upwork Fixed", shorttitle="UPFixed", overlay=true)
+
+// Initialization
+var float lowestMonthLow = na
+var float weekHigh = na
+var float weekLow = na
+var int previousMonth = na
+var int previousWeek = na
+
+// Update monthly low at the beginning of a new month
+if (month != na(previousMonth))
+    lowestMonthLow := low
+    previousMonth := month
+else
+    lowestMonthLow := math.min(lowestMonthLow, low)
+
+// Update weekly high/low at the beginning of a new week
+if (dayofweek != na(previousWeek))
+    weekHigh := high
+    weekLow := low
+    previousWeek := dayofweek
+else
+    weekHigh := math.max(weekHigh, high)
+    weekLow := math.min(weekLow, low)
+
+// 2. Calculate the Center Line of last week's High-Low Range.
+centerLine = (weekHigh + weekLow) / 2
+
+// 3. Calculate the Pivot Point
+weekClose = request.security(syminfo.tickerid, "W", close)
+pivotPoint = (weekHigh + weekLow + weekClose) / 3
+
+// 4. Check if we can trade
+canTradeLong = pivotPoint > lowestMonthLow or centerLine > lowestMonthLow
+
+// 5. Buy the bar close above BOTH the Pivot and Center Line.
+higherLevel = math.max(pivotPoint, centerLine)
+
+longCondition = close > higherLevel and canTradeLong
+if (longCondition)
+    strategy.entry("Long", strategy.long)
+
+// 6. Exit the trade if price closes below BOTH the Pivot and Center Line.
+lowerLevel = math.min(pivotPoint, centerLine)
+exitCondition = close < lowerLevel
+if (exitCondition)
+    strategy.close("Long")
+
+// Plotting
+bgcolor(longCondition ? color.new(color.green, 90) : na)
+bgcolor(exitCondition ? color.new(color.red, 90) : na)
+plot(pivotPoint, color=color.blue, title="Pivot Point", linewidth=1, style=plot.style_line)
+plot(centerLine, color=color.orange, title="Center Line", linewidth=1, style=plot.style_line)
+plot(lowestMonthLow, color=color.purple, title="Lowest Previous Month Low", linewidth=1, style=plot.style_line)
