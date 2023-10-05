@@ -14,7 +14,7 @@ strategy("Upwork Rolling", shorttitle="UPRolling", overlay=true)
 lookBackMonth = input.int(31, title="Rolling look back period for Previous Month Low", minval=1)
 lookBackWeek = input.int(7, title="Rolling look back period for Last Week", minval=1)
 
-// 1. Find the lowest point of the Previous Calendar Month.
+// 1. Find the lowest point of the rolling Previous Calendar Month.
 lowestMonthLow = ta.lowest(low[1], lookBackMonth)
 
 // 2. Calculate the Center Line of last week's High-Low Range.
