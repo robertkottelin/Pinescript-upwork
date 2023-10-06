@@ -3,3 +3,5 @@
 
 UpworkFixed calculates the strategy based on fixed months and weeks
 UpworkRolling uses rolling calculation
+
+![Alt text](image.png)
